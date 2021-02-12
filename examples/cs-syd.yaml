@@ -1,0 +1,61 @@
+checks:
+# Main site
+- get: "https://cs-syd.eu"
+  status: 200
+- get: "http://cs-syd.eu"
+  status: 301
+  location: "https://cs-syd.eu/"
+- get: "https://cssyd.eu"
+  status: 200
+- get: "http://cssyd.eu"
+  status: 301
+  location: "https://cssyd.eu/"
+
+# WEM
+- get: "https://wem.icu"
+  status: 301
+  location: "https://worldwideempathyformeds.org/"
+- get: "https://worldwideempathyformeds.org"
+  status: 200
+- get: "https://worldwideempathyformedics.org"
+  status: 200
+- get: "https://www.worldwideempathyformeds.org"
+  status: 200
+- get: "https://www.worldwideempathyformedics.org"
+  status: 200
+
+# Intray
+- get: "https://intray.eu"
+  status: 200
+- get: "http://intray.eu"
+  status: 301
+  location: "https://intray.eu/"
+- get: "https://intray.cs-syd.eu"
+  status: 200
+- get: "http://intray.cs-syd.eu"
+  status: 301
+  location: "https://intray.cs-syd.eu/"
+
+# Tickler
+- get: "https://tickler.cs-syd.eu"
+  status: 200
+- get: "http://tickler.cs-syd.eu"
+  status: 301
+  location: "https://tickler.cs-syd.eu/"
+
+# Smos
+- get: "https://smos.cs-syd.eu"
+  status: 200
+- get: "https://api.smos.cs-syd.eu"
+- get: "https://smos.cs-syd.eu"
+  status: 200
+- get: "https://smos.online"
+  status: 200
+- get: "https://api.smos.cs-syd.eu"
+- get: "https://api.smos.online"
+
+# Donna
+- get: "https://donna.cs-syd.eu"
+  status: 200
+
+ 
