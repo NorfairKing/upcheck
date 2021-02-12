@@ -66,9 +66,9 @@ singleCheckSpec =
             case errOrResp of
               Left err -> do
                 let ctx = unlines ["Request: ", ppShow req]
-                context ctx $
-                  expectationFailure $
-                    show err
+                context ctx
+                  $ expectationFailure
+                  $ show err
               Right resp -> do
                 let ctx = unlines ["Request: ", ppShow req, "Response: ", ppShow resp]
                 context ctx $ do
@@ -96,9 +96,10 @@ retryHTTP action = retrying policy (\_ e -> pure (couldBeFlaky e)) (\_ -> (Right
     couldBeFlaky _ = False
     policy = exponentialBackoff 100 <> limitRetries 10
 
-data CheckSpec = CheckSpec
-  { specChecks :: ![Check]
-  }
+data CheckSpec
+  = CheckSpec
+      { specChecks :: ![Check]
+      }
   deriving (Show, Eq, Generic)
 
 instance FromJSON CheckSpec where
