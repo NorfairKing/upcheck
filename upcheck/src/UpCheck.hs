@@ -71,9 +71,9 @@ singleCheckSpec retryPolicySpec =
             case errOrResp of
               Left err -> do
                 let ctx = unlines ["Request: ", ppShow req]
-                context ctx $
-                  expectationFailure $
-                    show err
+                context ctx
+                  $ expectationFailure
+                  $ show err
               Right resp -> do
                 let ctx = unlines ["Request: ", ppShow req, "Response: ", ppShow resp]
                 context ctx $ do
@@ -114,10 +114,11 @@ retryHTTP retryPolicySpec req action =
       InvalidUrlException _ _ -> False
     couldBeFlaky _ = False
 
-data CheckSpec = CheckSpec
-  { specRetryPolicy :: RetryPolicySpec,
-    specChecks :: ![Check]
-  }
+data CheckSpec
+  = CheckSpec
+      { specRetryPolicy :: !RetryPolicySpec,
+        specChecks :: ![Check]
+      }
   deriving (Show, Eq, Generic)
 
 instance FromJSON CheckSpec where
@@ -130,10 +131,11 @@ instance YamlSchema CheckSpec where
         <$> optionalFieldWithDefault "retry-policy" defaultRetryPolicySpec "The retry policy for flaky checks due to network failures etc"
         <*> requiredField "checks" "The checks to perform"
 
-data RetryPolicySpec = RetryPolicySpec
-  { retryPolicySpecMaxRetries :: Word,
-    retryPolicySpecBaseDelay :: Word
-  }
+data RetryPolicySpec
+  = RetryPolicySpec
+      { retryPolicySpecMaxRetries :: !Word,
+        retryPolicySpecBaseDelay :: !Word
+      }
   deriving (Show, Eq, Generic)
 
 instance FromJSON RetryPolicySpec where
