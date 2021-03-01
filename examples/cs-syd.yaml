@@ -1,3 +1,5 @@
+retry-policy:
+  max-retries: 1
 checks:
 # Main site
 - get: "https://cs-syd.eu"
@@ -57,5 +59,3 @@ checks:
 # Donna
 - get: "https://donna.cs-syd.eu"
   status: 200
-
- 

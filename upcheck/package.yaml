@@ -17,6 +17,8 @@ library:
   - http-client-tls
   - http-types
   - network-uri
+  - path
+  - path-io
   - pretty-show
   - retry
   - sydtest
