@@ -18,6 +18,7 @@ import Control.Retry
 import Data.Aeson.Types as JSON
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+import Data.Version
 import GHC.Generics (Generic)
 import Network.HTTP.Client as HTTP
 import Network.HTTP.Client.Internal as HTTP
@@ -26,6 +27,7 @@ import Network.HTTP.Types as HTTP
 import Network.URI
 import Path
 import Path.IO
+import Paths_upcheck
 import System.Environment
 import System.Exit
 import Test.Syd
@@ -64,7 +66,8 @@ singleCheckSpec retryPolicySpec =
    in \case
         CheckGet uri mExpectedStatus mExpectedLocation ->
           uRIIt uri "GET" $ \man -> do
-            req <- requestFromURI uri
+            req' <- requestFromURI uri
+            let req = req' {requestHeaders = ("User-Agent", TE.encodeUtf8 $ T.pack $ "upcheck-" <> showVersion version) : requestHeaders req'}
             errOrResp <-
               retryHTTP retryPolicySpec req $
                 (() <$) <$> httpRaw req man
