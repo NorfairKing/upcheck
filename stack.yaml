@@ -1,19 +1,53 @@
-resolver: lts-15.15
+resolver: lts-18.16
 packages:
 - upcheck
+
 extra-deps:
 - github: NorfairKing/sydtest
-  commit: 2c563d5a819c70aad9f4d4f044cd72880921039b
+  commit: 127362d7e48d9b983f61e358966af71003f95026
   subdirs:
     - sydtest
-
-- envparse-0.4.1@sha256:989902e6368532548f61de1fa245ad2b39176cddd8743b20071af519a709ce30,2842
-- yamlparse-applicative-0.1.0.2@sha256:bda91f2818c1b5b124963931cb7f9a4e5758d026c09713e9ae2234534062747d,2133
-
-
+- github: NorfairKing/autodocodec
+  commit: 9880ec062f1166bdac50b8eb59c6dd010bc9af0c
+  subdirs:
+    - autodocodec
+    - autodocodec-schema
+    - autodocodec-yaml
+- github: NorfairKing/validity
+  commit: 466bb2f140e62cae0d4fe3770681c3d74e99cf40
+  subdirs:
+    - genvalidity
+    - genvalidity-aeson
+    - genvalidity-bytestring
+    - genvalidity-containers
+    - genvalidity-criterion
+    - genvalidity-path
+    - genvalidity-persistent
+    - genvalidity-property
+    - genvalidity-scientific
+    - genvalidity-sydtest
+    - genvalidity-sydtest-aeson
+    - genvalidity-sydtest-hashable
+    - genvalidity-sydtest-lens
+    - genvalidity-sydtest-persistent
+    - genvalidity-text
+    - genvalidity-time
+    - genvalidity-unordered-containers
+    - genvalidity-uuid
+    - genvalidity-vector
+    - validity
+    - validity-aeson
+    - validity-bytestring
+    - validity-containers
+    - validity-path
+    - validity-persistent
+    - validity-primitive
+    - validity-scientific
+    - validity-text
+    - validity-time
+    - validity-unordered-containers
+    - validity-uuid
+    - validity-vector
 nix:
-  path: [ "nixpkgs=https://github.com/NixOS/nixpkgs/archive/e3a2247046d4de66b9b193a6ab3ff040fa3da86d.tar.gz" ]
-  add-gc-roots: true
-  packages:
-  - zlib
+  shell-file: shell.nix
 

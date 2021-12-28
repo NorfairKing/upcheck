@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NumericUnderscores #-}
@@ -12,10 +13,12 @@ module UpCheck
   )
 where
 
+import Autodocodec
+import Autodocodec.Yaml
 import Control.Exception
 import Control.Monad
 import Control.Retry
-import Data.Aeson.Types as JSON
+import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Version
@@ -32,7 +35,6 @@ import System.Environment
 import System.Exit
 import Test.Syd
 import Test.Syd.OptParse (defaultSettings)
-import YamlParse.Applicative
 
 upCheck :: IO ()
 upCheck = do
@@ -41,14 +43,13 @@ upCheck = do
     [] -> die "Supply a spec file path as an argument"
     (sfp : _) -> do
       afp <- resolveFile' sfp
-      mspec <- readConfigFile afp
+      mspec <- readYamlConfigFile afp
       case mspec of
         Nothing -> die $ "Spec file not found: " <> fromAbsFile afp
         Just spec -> runCheckSpec spec
 
 runCheckSpec :: CheckSpec -> IO ()
-runCheckSpec cs =
-  sydTestWith defaultSettings (checkSpec cs)
+runCheckSpec cs = sydTestWith defaultSettings (checkSpec cs)
 
 checkSpec :: CheckSpec -> Spec
 checkSpec CheckSpec {..} =
@@ -57,7 +58,7 @@ checkSpec CheckSpec {..} =
         man <- HTTP.newTlsManager
         func man
     )
-    $ mapM_ (singleCheckSpec specRetryPolicy) specChecks
+    $ doNotRandomiseExecutionOrder $ mapM_ (singleCheckSpec specRetryPolicy) specChecks
 
 singleCheckSpec :: RetryPolicySpec -> Check -> TestDef '[HTTP.Manager] ()
 singleCheckSpec retryPolicySpec =
@@ -74,9 +75,9 @@ singleCheckSpec retryPolicySpec =
             case errOrResp of
               Left err -> do
                 let ctx = unlines ["Request: ", ppShow req]
-                context ctx
-                  $ expectationFailure
-                  $ show err
+                context ctx $
+                  expectationFailure $
+                    show err
               Right resp -> do
                 let ctx = unlines ["Request: ", ppShow req, "Response: ", ppShow resp]
                 context ctx $ do
@@ -117,39 +118,32 @@ retryHTTP retryPolicySpec req action =
       InvalidUrlException _ _ -> False
     couldBeFlaky _ = False
 
-data CheckSpec
-  = CheckSpec
-      { specRetryPolicy :: !RetryPolicySpec,
-        specChecks :: ![Check]
-      }
+data CheckSpec = CheckSpec
+  { specRetryPolicy :: !RetryPolicySpec,
+    specChecks :: ![Check]
+  }
   deriving (Show, Eq, Generic)
 
-instance FromJSON CheckSpec where
-  parseJSON = viaYamlSchema
-
-instance YamlSchema CheckSpec where
-  yamlSchema =
-    objectParser "CheckSpec" $
+instance HasCodec CheckSpec where
+  codec =
+    object "CheckSpec" $
       CheckSpec
-        <$> optionalFieldWithDefault "retry-policy" defaultRetryPolicySpec "The retry policy for flaky checks due to network failures etc"
-        <*> requiredField "checks" "The checks to perform"
+        <$> optionalFieldWithDefault "retry-policy" defaultRetryPolicySpec "The retry policy for flaky checks due to network failures etc" .= specRetryPolicy
+        <*> requiredField "checks" "The checks to perform" .= specChecks
 
-data RetryPolicySpec
-  = RetryPolicySpec
-      { retryPolicySpecMaxRetries :: !Word,
-        retryPolicySpecBaseDelay :: !Word
-      }
-  deriving (Show, Eq, Generic)
+data RetryPolicySpec = RetryPolicySpec
+  { retryPolicySpecMaxRetries :: !Word,
+    retryPolicySpecBaseDelay :: !Word
+  }
+  deriving stock (Show, Eq, Generic)
+  deriving (FromJSON, ToJSON) via (Autodocodec RetryPolicySpec)
 
-instance FromJSON RetryPolicySpec where
-  parseJSON = viaYamlSchema
-
-instance YamlSchema RetryPolicySpec where
-  yamlSchema =
-    objectParser "RetryPolicySpec" $
+instance HasCodec RetryPolicySpec where
+  codec =
+    object "RetryPolicySpec" $
       RetryPolicySpec
-        <$> optionalFieldWithDefault "max-retries" (retryPolicySpecMaxRetries defaultRetryPolicySpec) "The maximum number of retries"
-        <*> optionalFieldWithDefault "base-delay" (retryPolicySpecBaseDelay defaultRetryPolicySpec) "The delay between the first and second try, in microseconds"
+        <$> optionalFieldWithDefault "max-retries" (retryPolicySpecMaxRetries defaultRetryPolicySpec) "The maximum number of retries" .= retryPolicySpecMaxRetries
+        <*> optionalFieldWithDefault "base-delay" (retryPolicySpecBaseDelay defaultRetryPolicySpec) "The delay between the first and second try, in microseconds" .= retryPolicySpecBaseDelay
 
 defaultRetryPolicySpec :: RetryPolicySpec
 defaultRetryPolicySpec =
@@ -165,17 +159,28 @@ retryPolicySpecToRetryPolicy RetryPolicySpec {..} =
       limitRetries $ fromIntegral retryPolicySpecMaxRetries
     ]
 
-data Check
-  = CheckGet !URI (Maybe Int) (Maybe URI)
-  deriving (Show, Eq, Generic)
+data Check = CheckGet
+  { checkURI :: !URI,
+    checkStatus :: !(Maybe Int),
+    checkLocation :: !(Maybe URI)
+  }
+  deriving stock (Show, Eq, Generic)
+  deriving (FromJSON, ToJSON) via (Autodocodec Check)
 
-instance FromJSON Check where
-  parseJSON = viaYamlSchema
-
-instance YamlSchema Check where
-  yamlSchema =
-    objectParser "Check" $
+instance HasCodec Check where
+  codec =
+    object "Check" $
       CheckGet
-        <$> requiredFieldWith "get" "The URL to GET" (maybeParser parseURI yamlSchema)
-        <*> optionalField "status" "The expected status code. If this is not supplied, any status code will pass the test, as long as the server replied."
-        <*> optionalFieldWith "location" "The expected location for a redirect" (maybeParser parseURI yamlSchema)
+        <$> requiredField "get" "The URL to GET" .= checkURI
+        <*> optionalField "status" "The expected status code. If this is not supplied, any status code will pass the test, as long as the server replied." .= checkStatus
+        <*> optionalField "location" "The expected location for a redirect" .= checkLocation
+
+instance HasCodec URI where
+  codec =
+    bimapCodec
+      ( \s -> case parseURI s of
+          Nothing -> Left $ "Could not parse URI: " <> s
+          Just uri -> Right uri
+      )
+      show
+      codec

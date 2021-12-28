@@ -12,6 +12,8 @@ library:
   source-dirs: src
   dependencies:
   - aeson
+  - autodocodec
+  - autodocodec-yaml
   - bytestring
   - http-client
   - http-client-tls
@@ -24,7 +26,6 @@ library:
   - sydtest
   - text
   - yaml
-  - yamlparse-applicative
 
 executables:
   upcheck:
