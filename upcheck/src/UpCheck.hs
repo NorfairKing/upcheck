@@ -58,7 +58,8 @@ checkSpec CheckSpec {..} =
         man <- HTTP.newTlsManager
         func man
     )
-    $ doNotRandomiseExecutionOrder $ mapM_ (singleCheckSpec specRetryPolicy) specChecks
+    $ doNotRandomiseExecutionOrder
+    $ mapM_ (singleCheckSpec specRetryPolicy) specChecks
 
 singleCheckSpec :: RetryPolicySpec -> Check -> TestDef '[HTTP.Manager] ()
 singleCheckSpec retryPolicySpec =
