@@ -11,7 +11,7 @@ with lib;
         options = {
           uri = mkOption {
             type = types.str;
-            example = "a";
+            example = "https://cs-syd.eu";
             description = "The uri to check";
           };
           status = mkOption {
@@ -44,7 +44,7 @@ with lib;
       description = "The command to pass the output to in case of a failure";
     };
   };
-  config.systemd =
+  config =
     let
       cfg = config.services.upcheck;
       upcheckName = "upcheck";
@@ -66,21 +66,31 @@ with lib;
         description = "Website Up Checker";
         path = [ upcheck ];
         script = ''
-          set +e # We need error codes to work this way.
+          # We need error codes to work this way.
+          # We also need this to make sure that the service still fails
+          # correctly when the notification command fails.
+          set +e
+          set -x # See what's happening.
 
           tmpfile=~/.upcheck
           ${upcheck}/bin/upcheck ${configFile} 2>&1 > "$tmpfile"
-          if [[ "$?" != "0" ]]
+          exitcode="$?"
+          if [[ "$exitcode" != "0" ]]
           then
             cat "$tmpfile" | ${cfg.notifyCommand}
+            rm -f "$tmpfile"
+            # Make sure the service still fails.
+            exit "$exitcode"
           fi
-          rm -f "$tmpfile"
         '';
       };
 
     in
     mkIf cfg.enable {
-      timers = { "${upcheckName}" = upcheckTimer; };
-      services = { "${upcheckName}" = upcheckService; };
+      environment.systemPackages = [ upcheck ];
+      systemd = {
+        timers = { "${upcheckName}" = upcheckTimer; };
+        services = { "${upcheckName}" = upcheckService; };
+      };
     };
 }
