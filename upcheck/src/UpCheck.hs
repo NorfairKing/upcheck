@@ -87,7 +87,7 @@ singleCheckSpec retryPolicySpec =
                   forM_ mExpectedLocation $ \expectedLocation ->
                     case lookup "Location" (responseHeaders resp) of
                       Nothing -> expectationFailure $ "No location header found in response, but expected: " <> show expectedLocation
-                      Just loc -> case parseURI (T.unpack (TE.decodeUtf8 loc)) of
+                      Just loc -> case parseURIReference (T.unpack (TE.decodeUtf8 loc)) of
                         Nothing -> expectationFailure $ "Found a location header, but it didn't parse as a URI: " <> show loc
                         Just actualLoc ->
                           actualLoc `shouldBe` expectedLocation
@@ -129,8 +129,10 @@ instance HasCodec CheckSpec where
   codec =
     object "CheckSpec" $
       CheckSpec
-        <$> optionalFieldWithDefault "retry-policy" defaultRetryPolicySpec "The retry policy for flaky checks due to network failures etc" .= specRetryPolicy
-        <*> requiredField "checks" "The checks to perform" .= specChecks
+        <$> optionalFieldWithDefault "retry-policy" defaultRetryPolicySpec "The retry policy for flaky checks due to network failures etc"
+          .= specRetryPolicy
+        <*> requiredField "checks" "The checks to perform"
+          .= specChecks
 
 data RetryPolicySpec = RetryPolicySpec
   { retryPolicySpecMaxRetries :: !Word,
@@ -143,8 +145,10 @@ instance HasCodec RetryPolicySpec where
   codec =
     object "RetryPolicySpec" $
       RetryPolicySpec
-        <$> optionalFieldWithDefault "max-retries" (retryPolicySpecMaxRetries defaultRetryPolicySpec) "The maximum number of retries" .= retryPolicySpecMaxRetries
-        <*> optionalFieldWithDefault "base-delay" (retryPolicySpecBaseDelay defaultRetryPolicySpec) "The delay between the first and second try, in microseconds" .= retryPolicySpecBaseDelay
+        <$> optionalFieldWithDefault "max-retries" (retryPolicySpecMaxRetries defaultRetryPolicySpec) "The maximum number of retries"
+          .= retryPolicySpecMaxRetries
+        <*> optionalFieldWithDefault "base-delay" (retryPolicySpecBaseDelay defaultRetryPolicySpec) "The delay between the first and second try, in microseconds"
+          .= retryPolicySpecBaseDelay
 
 defaultRetryPolicySpec :: RetryPolicySpec
 defaultRetryPolicySpec =
@@ -172,14 +176,17 @@ instance HasCodec Check where
   codec =
     object "Check" $
       CheckGet
-        <$> requiredField "get" "The URL to GET" .= checkURI
-        <*> optionalField "status" "The expected status code. If this is not supplied, any status code will pass the test, as long as the server replied." .= checkStatus
-        <*> optionalField "location" "The expected location for a redirect" .= checkLocation
+        <$> requiredField "get" "The URL to GET"
+          .= checkURI
+        <*> optionalField "status" "The expected status code. If this is not supplied, any status code will pass the test, as long as the server replied."
+          .= checkStatus
+        <*> optionalField "location" "The expected location for a redirect"
+          .= checkLocation
 
 instance HasCodec URI where
   codec =
     bimapCodec
-      ( \s -> case parseURI s of
+      ( \s -> case parseURIReference s of
           Nothing -> Left $ "Could not parse URI: " <> s
           Just uri -> Right uri
       )
