@@ -33,7 +33,7 @@
     }:
     let
       system = "x86_64-linux";
-      pkgsFor = nixpkgs: import nixpkgs {
+      pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
         overlays = [
@@ -46,11 +46,14 @@
           (import (weeder-nix + "/nix/overlay.nix"))
         ];
       };
-      pkgs = pkgsFor nixpkgs;
+      pkgsMusl = pkgs.pkgsMusl;
     in
     {
       overlays.${system} = import ./nix/overlay.nix;
-      packages.${system}.default = pkgs.upcheck;
+      packages.${system} = {
+        default = pkgs.upcheck;
+        static = pkgsMusl.upcheck;
+      };
       checks.${system} = {
         release = self.packages.${system}.default;
         nixos-module-test = import ./nix/nixos-module-test.nix {
@@ -75,9 +78,7 @@
       };
       devShells.${system}.default = pkgs.haskellPackages.shellFor {
         name = "upcheck-shell";
-        packages = (p:
-          [ p.upcheck ]
-        );
+        packages = p: [ p.upcheck ];
         withHoogle = true;
         doBenchmark = true;
         buildInputs = (with pkgs; [
@@ -93,6 +94,6 @@
           ]);
         shellHook = self.checks.${system}.pre-commit.shellHook;
       };
-      nixosModules.${system}.default = import ./nix/nixos-module.nix { upcheck = pkgs.upcheck; };
+      nixosModules.${system}.default = import ./nix/nixos-module.nix { upcheck = self.packages.${system}.static; };
     };
 }
