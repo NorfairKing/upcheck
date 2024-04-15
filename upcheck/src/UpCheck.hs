@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
@@ -18,11 +17,9 @@ import Autodocodec.Yaml
 import Control.Exception
 import Control.Monad
 import Control.Retry
-import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Version
-import GHC.Generics (Generic)
 import Network.HTTP.Client as HTTP
 import Network.HTTP.Client.Internal as HTTP
 import Network.HTTP.Client.TLS as HTTP
@@ -123,7 +120,6 @@ data CheckSpec = CheckSpec
   { specRetryPolicy :: !RetryPolicySpec,
     specChecks :: ![Check]
   }
-  deriving (Show, Eq, Generic)
 
 instance HasCodec CheckSpec where
   codec =
@@ -138,8 +134,6 @@ data RetryPolicySpec = RetryPolicySpec
   { retryPolicySpecMaxRetries :: !Word,
     retryPolicySpecBaseDelay :: !Word
   }
-  deriving stock (Show, Eq, Generic)
-  deriving (FromJSON, ToJSON) via (Autodocodec RetryPolicySpec)
 
 instance HasCodec RetryPolicySpec where
   codec =
@@ -169,8 +163,6 @@ data Check = CheckGet
     checkStatus :: !(Maybe Int),
     checkLocation :: !(Maybe URI)
   }
-  deriving stock (Show, Eq, Generic)
-  deriving (FromJSON, ToJSON) via (Autodocodec Check)
 
 instance HasCodec Check where
   codec =
