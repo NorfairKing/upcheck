@@ -7,10 +7,17 @@ extra-deps:
   commit: 6be618a53366d2453ba55da6cddc119d6d589916
   subdirs:
     - sydtest
+- github: NorfairKing/safe-coloured-text
+  commit: 046f10147a058c00c2706d98c341219e3cbc7669
+  subdirs:
+    - safe-coloured-text
+    - safe-coloured-text-layout
+    - safe-coloured-text-terminfo
 - github: NorfairKing/autodocodec
-  commit: ef4a7cc685fb1fb9aa7443285f01fa5ebc95a9a2
+  commit: f19887d136fe3504361e6cb38ae62b17940c3f75
   subdirs:
     - autodocodec
+    - autodocodec-nix
     - autodocodec-schema
     - autodocodec-yaml
 - github: NorfairKing/validity

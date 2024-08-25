@@ -12,6 +12,8 @@ author:         Tom Sydney Kerckhove
 maintainer:     syd@cs-syd.eu
 copyright:      Copyright (c) 2020 Tom Sydney Kerckhove
 build-type:     Simple
+extra-source-files:
+    options.nix
 
 source-repository head
   type: git
@@ -27,6 +29,7 @@ library
   build-depends:
       aeson
     , autodocodec
+    , autodocodec-nix
     , autodocodec-yaml
     , base >=4.7 && <5
     , bytestring
@@ -52,5 +55,30 @@ executable upcheck
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , upcheck
+  default-language: Haskell2010
+
+test-suite upscheck-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      DNSCheckSpec
+      Paths_upcheck
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      sydtest-discover:sydtest-discover
+  build-depends:
+      QuickCheck
+    , autodocodec-nix
+    , base >=4.7 && <5
+    , genvalidity-bytestring
+    , genvalidity-sydtest
+    , genvalidity-sydtest-aeson
+    , genvalidity-text
+    , iproute
+    , sydtest
+    , text
     , upcheck
   default-language: Haskell2010

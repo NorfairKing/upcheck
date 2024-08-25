@@ -5,6 +5,9 @@ author:              "Tom Sydney Kerckhove"
 maintainer:          "syd@cs-syd.eu"
 copyright:           "Copyright (c) 2020 Tom Sydney Kerckhove"
 
+extra-source-files:
+- options.nix
+
 dependencies:
 - base >= 4.7 && < 5
 
@@ -13,6 +16,7 @@ library:
   dependencies:
   - aeson
   - autodocodec
+  - autodocodec-nix
   - autodocodec-yaml
   - bytestring
   - http-client
@@ -37,3 +41,26 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - upcheck
+
+
+tests:
+  upscheck-test:
+    main: Spec.hs
+    source-dirs: test
+    build-tools: sydtest-discover
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - QuickCheck
+    - autodocodec-nix
+    - upcheck
+    - genvalidity-bytestring
+    - genvalidity-sydtest
+    - genvalidity-sydtest-aeson
+    - genvalidity-text
+    - iproute
+    - sydtest
+    - text

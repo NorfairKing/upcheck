@@ -9,6 +9,7 @@
 
 module UpCheck
   ( upCheck,
+    CheckSpec (..),
   )
 where
 
@@ -31,22 +32,21 @@ import Paths_upcheck
 import System.Environment
 import System.Exit
 import Test.Syd
-import Test.Syd.OptParse (defaultSettings)
 
 upCheck :: IO ()
 upCheck = do
   args <- getArgs
   case args of
     [] -> die "Supply a spec file path as an argument"
-    (sfp : _) -> do
+    (sfp : restArgs) -> do
       afp <- resolveFile' sfp
       mspec <- readYamlConfigFile afp
       case mspec of
         Nothing -> die $ "Spec file not found: " <> fromAbsFile afp
-        Just spec -> runCheckSpec spec
+        Just spec -> withArgs restArgs $ runCheckSpec spec
 
 runCheckSpec :: CheckSpec -> IO ()
-runCheckSpec cs = sydTestWith defaultSettings (checkSpec cs)
+runCheckSpec cs = sydTest (checkSpec cs)
 
 checkSpec :: CheckSpec -> Spec
 checkSpec CheckSpec {..} =
@@ -125,23 +125,24 @@ instance HasCodec CheckSpec where
   codec =
     object "CheckSpec" $
       CheckSpec
-        <$> optionalFieldWithDefault "retry-policy" defaultRetryPolicySpec "The retry policy for flaky checks due to network failures etc"
+        <$> optionalFieldOrNullWithOmittedDefault "retry-policy" defaultRetryPolicySpec "The retry policy for flaky checks due to network failures etc"
           .= specRetryPolicy
-        <*> requiredField "checks" "The checks to perform"
+        <*> optionalFieldOrNullWithOmittedDefault "checks" [] "The checks to perform"
           .= specChecks
 
 data RetryPolicySpec = RetryPolicySpec
   { retryPolicySpecMaxRetries :: !Word,
     retryPolicySpecBaseDelay :: !Word
   }
+  deriving (Eq)
 
 instance HasCodec RetryPolicySpec where
   codec =
     object "RetryPolicySpec" $
       RetryPolicySpec
-        <$> optionalFieldWithDefault "max-retries" (retryPolicySpecMaxRetries defaultRetryPolicySpec) "The maximum number of retries"
+        <$> optionalFieldOrNullWithOmittedDefault "max-retries" (retryPolicySpecMaxRetries defaultRetryPolicySpec) "The maximum number of retries"
           .= retryPolicySpecMaxRetries
-        <*> optionalFieldWithDefault "base-delay" (retryPolicySpecBaseDelay defaultRetryPolicySpec) "The delay between the first and second try, in microseconds"
+        <*> optionalFieldOrNullWithOmittedDefault "base-delay" (retryPolicySpecBaseDelay defaultRetryPolicySpec) "The delay between the first and second try, in microseconds"
           .= retryPolicySpecBaseDelay
 
 defaultRetryPolicySpec :: RetryPolicySpec
@@ -163,6 +164,7 @@ data Check = CheckGet
     checkStatus :: !(Maybe Int),
     checkLocation :: !(Maybe URI)
   }
+  deriving (Eq)
 
 instance HasCodec Check where
   codec =
@@ -170,9 +172,9 @@ instance HasCodec Check where
       CheckGet
         <$> requiredField "get" "The URL to GET"
           .= checkURI
-        <*> optionalField "status" "The expected status code. If this is not supplied, any status code will pass the test, as long as the server replied."
+        <*> optionalFieldOrNull "status" "The expected status code. If this is not supplied, any status code will pass the test, as long as the server replied."
           .= checkStatus
-        <*> optionalField "location" "The expected location for a redirect"
+        <*> optionalFieldOrNull "location" "The expected location for a redirect"
           .= checkLocation
 
 instance HasCodec URI where

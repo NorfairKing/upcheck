@@ -11,7 +11,7 @@
     weeder-nix.flake = false;
     validity.url = "github:NorfairKing/validity";
     validity.flake = false;
-    autodocodec.url = "github:NorfairKing/autodocodec";
+    autodocodec.url = "github:NorfairKing/autodocodec/development";
     autodocodec.flake = false;
     safe-coloured-text.url = "github:NorfairKing/safe-coloured-text";
     safe-coloured-text.flake = false;
@@ -19,6 +19,8 @@
     fast-myers-diff.flake = false;
     sydtest.url = "github:NorfairKing/sydtest";
     sydtest.flake = false;
+    opt-env-conf.url = "github:NorfairKing/opt-env-conf";
+    opt-env-conf.flake = false;
   };
   outputs =
     { self
@@ -30,6 +32,7 @@
     , fast-myers-diff
     , sydtest
     , autodocodec
+    , opt-env-conf
     }:
     let
       system = "x86_64-linux";
@@ -42,6 +45,7 @@
           (import (safe-coloured-text + "/nix/overlay.nix"))
           (import (fast-myers-diff + "/nix/overlay.nix"))
           (import (sydtest + "/nix/overlay.nix"))
+          (import (opt-env-conf + "/nix/overlay.nix"))
           (import (validity + "/nix/overlay.nix"))
           (import (weeder-nix + "/nix/overlay.nix"))
         ];
@@ -71,7 +75,10 @@
             hpack.enable = true;
             ormolu.enable = true;
             nixpkgs-fmt.enable = true;
-            nixpkgs-fmt.excludes = [ ".*/default.nix" ];
+            nixpkgs-fmt.excludes = [
+              ".*/default.nix"
+              "upcheck/options.nix"
+            ];
             cabal2nix.enable = true;
           };
         };

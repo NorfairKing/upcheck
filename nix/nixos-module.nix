@@ -5,33 +5,9 @@ with lib;
 {
   options.services.upcheck = {
     enable = mkEnableOption "Website Up Checker";
-    checks = mkOption {
-      default = [ ];
-      type = types.listOf (types.submodule {
-        options = {
-          uri = mkOption {
-            type = types.str;
-            example = "https://cs-syd.eu";
-            description = "The uri to check";
-          };
-          status = mkOption {
-            type = types.nullOr types.int;
-            default = null;
-            example = "200";
-            description = "The status to expect";
-          };
-          location = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "The redirect to expect";
-          };
-        };
-      });
-    };
-    verbatimConfig = mkOption {
-      type = types.str;
-      default = "";
-      description = "Extra configuration, verbatim";
+    config = mkOption {
+      default = { };
+      type = import ../upcheck/options.nix { inherit lib; };
     };
     onCalendar = mkOption {
       type = types.str;
@@ -55,13 +31,10 @@ with lib;
           Persistent = true;
         };
       };
-      configFile =
-        if cfg.checks == [ ] && !builtins.isNull cfg.verbatimConfig
-        then pkgs.writeText "upcheck-config-file" cfg.verbatimConfig
-        else
-          (pkgs.formats.yaml { }).generate "upcheck-config.yaml" {
-            checks = cfg.checks;
-          };
+      configFile = (pkgs.formats.yaml { }).generate "upcheck-config.yaml" cfg.config;
+      settingsCheck = pkgs.runCommand "upcheck-settings-check" { } ''
+        ${upcheck}/bin/upcheck ${configFile} --help > $out
+      '';
       upcheckService = {
         description = "Website Up Checker";
         path = [ upcheck ];
@@ -83,6 +56,7 @@ with lib;
             exit "$exitcode"
           fi
         '';
+        documentation = [ "${settingsCheck}" ];
       };
 
     in
