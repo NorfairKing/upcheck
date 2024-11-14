@@ -50,19 +50,12 @@
           (import (weeder-nix + "/nix/overlay.nix"))
         ];
       };
-      pkgsMusl = pkgs.pkgsMusl;
     in
     {
       overlays.${system} = import ./nix/overlay.nix;
-      packages.${system} = {
-        default = self.packages.${system}.dynamic;
-        dynamic = pkgs.upcheck;
-        static = pkgsMusl.upcheck;
-      };
+      packages.${system}.default = pkgs.upcheck;
       checks.${system} = {
         release = self.packages.${system}.default;
-        dynamic = self.packages.${system}.dynamic;
-        static = self.packages.${system}.static;
         nixos-module-test = import ./nix/nixos-module-test.nix {
           inherit pkgs;
           upcheck-nixos-module = self.nixosModules.${system}.default;
@@ -97,10 +90,6 @@
         ] ++ self.checks.${system}.pre-commit.enabledPackages;
         shellHook = self.checks.${system}.pre-commit.shellHook;
       };
-      nixosModules.${system} = {
-        default = self.nixosModules.${system}.dynamic;
-        static = import ./nix/nixos-module.nix { upcheck = self.packages.${system}.static; };
-        dynamic = import ./nix/nixos-module.nix { upcheck = self.packages.${system}.dynamic; };
-      };
+      nixosModules.${system}.default = import ./nix/nixos-module.nix { upcheck = self.packages.${system}.default; };
     };
 }
