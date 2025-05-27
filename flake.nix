@@ -5,34 +5,16 @@
     extra-trusted-public-keys = "upcheck.cachix.org-1:fOaLBA5CXARqKdW1/JC3iT/c52hU77T9ZX9Fw4F17Ck=";
   };
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-25.05";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     weeder-nix.url = "github:NorfairKing/weeder-nix";
     weeder-nix.flake = false;
-    validity.url = "github:NorfairKing/validity";
-    validity.flake = false;
-    autodocodec.url = "github:NorfairKing/autodocodec/development";
-    autodocodec.flake = false;
-    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text";
-    safe-coloured-text.flake = false;
-    fast-myers-diff.url = "github:NorfairKing/fast-myers-diff";
-    fast-myers-diff.flake = false;
-    sydtest.url = "github:NorfairKing/sydtest";
-    sydtest.flake = false;
-    opt-env-conf.url = "github:NorfairKing/opt-env-conf";
-    opt-env-conf.flake = false;
   };
   outputs =
     { self
     , nixpkgs
     , pre-commit-hooks
     , weeder-nix
-    , validity
-    , safe-coloured-text
-    , fast-myers-diff
-    , sydtest
-    , autodocodec
-    , opt-env-conf
     }:
     let
       system = "x86_64-linux";
@@ -41,12 +23,6 @@
         config.allowUnfree = true;
         overlays = [
           self.overlays.${system}
-          (import (autodocodec + "/nix/overlay.nix"))
-          (import (safe-coloured-text + "/nix/overlay.nix"))
-          (import (fast-myers-diff + "/nix/overlay.nix"))
-          (import (sydtest + "/nix/overlay.nix"))
-          (import (opt-env-conf + "/nix/overlay.nix"))
-          (import (validity + "/nix/overlay.nix"))
           (import (weeder-nix + "/nix/overlay.nix"))
         ];
       };
