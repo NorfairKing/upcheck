@@ -1,7 +1,7 @@
 { pkgs
 , upcheck-nixos-module
 }:
-pkgs.nixosTest (
+pkgs.testers.runNixOSTest (
   { lib, pkgs, ... }: {
     name = "upcheck-module-test";
     nodes.machine = {
