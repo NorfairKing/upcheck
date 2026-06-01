@@ -1,5 +1,7 @@
 # UpCheck
 
+[![NixCI](https://staging.nix-ci.com/badge/gh:NorfairKing:upcheck)](https://staging.nix-ci.com/gh:NorfairKing:upcheck)
+
 A declarative checker for website uptime to run continuously for monitoring.
 
 This way you can be notified if any of your sites are not up.
